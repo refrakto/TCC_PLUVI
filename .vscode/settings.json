@@ -1,0 +1,4 @@
+{
+    "nuxtr.defaultPackageManager": "Bun",
+    "vue.suggest.componentNameCasing": "alwaysPascalCase"
+}
