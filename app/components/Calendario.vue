@@ -12,6 +12,7 @@
             <p class="dias" :class="dia.mesSelecionado ? 'bg-gray-200' : 'bg-gray-50'"> {{dia.js.date()}} </p>
           </template>
         </flex>
+        
     </template>
   </inline-flex>
 </template>
