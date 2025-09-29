@@ -1,24 +1,54 @@
+import { computed } from "vue";
+import type { Ref } from "vue";
 import type { Dayjs } from "dayjs"
+import dayjs from "dayjs";
 
-type Cal = Col[]
+export type Cal = Col[]
 
-type Col = {
+export type Col = {
   dias: Dia[]
 }
 
-type Dia = {
+export type Dia = {
   js: Dayjs
   mesSelecionado: boolean
 }
 
-const Dia = (js: Dayjs, mesSelecionado: boolean): Dia => ({ js, mesSelecionado })
+const newDia = (js: Dayjs, mesSelecionado: boolean): Dia => ({ js, mesSelecionado })
 
-export default (data: Dayjs) => {
-  const primeiroDiaMes = data.startOf('month');
-  const PrimeiroDiaSemana = primeiroDiaMes.day();
+export default (indice: Ref<number>) => {
+  
+    const hoje = dayjs();
+    const dataSelecionada = computed(() => hoje.month(hoje.month() + indice.value));
 
-  const dias: Dia[] = [];
-  for (let i = PrimeiroDiaSemana-1; i >= 0; i--) {
-    dias.unshift(Dia(primeiroDiaMes.date(-i), false));
-  }
+    const primeiroDiaMes = computed(() => dataSelecionada.value.startOf('month'));
+    const primeiroDiaSemana = computed(() => primeiroDiaMes.value.day());
+
+    const dias = computed(() => {
+      const dias: Dia[] = [];
+      //dias no calendário antes do mês selecionado
+      for (let i = primeiroDiaSemana.value - 1; i >= 0; i--) {
+        dias.unshift(newDia(primeiroDiaMes.value.date(-i), false));
+      }
+
+      //dias do mês selecionado e restantes
+      const length = dias.length;
+      for (let i=1; i<= 42- length; i++) {
+        let temp = primeiroDiaMes.value.date(i);
+        dias.push( newDia(temp, temp.month() === dataSelecionada.value.month()) );
+      }
+      return dias;
+    });
+
+    const calendario = computed(() => {
+      const calendario: Cal = [];
+
+      //separar nas colunas de cada semana do calendário
+      for (let i = 0; i <= 5; i++) {
+        calendario.push({ dias: dias.value.slice(0+(i*7), 7+(i*7)) });
+      }
+      return calendario;
+    })
+    
+  return { calendario, dias, dataSelecionada, hoje };
 }

@@ -3,14 +3,22 @@ import {
     presetAttributify,
     presetTagify,
     presetIcons,
-    presetWind4,
     transformerVariantGroup,
     transformerDirectives,
 } from 'unocss';
+import { presetWind4 } from '@unocss/preset-wind4';
+import { createRemToPxProcessor } from '@unocss/preset-wind4/utils';
 
 export default defineConfig({
     presets: [
-        presetWind4(),
+        presetWind4({
+            preflights: {
+                theme: {
+                    mode: 'on-demand',
+                    process: createRemToPxProcessor()
+                }
+            }
+        }),
         presetIcons({
             collections: {
                 lu: () => import('@iconify-json/lucide/icons.json').then(i => i.default),
@@ -22,14 +30,13 @@ export default defineConfig({
     ],
     transformers: [
         transformerVariantGroup(),
-        transformerDirectives({
-            applyVariable: '--a',
-        }),
+        transformerDirectives({ applyVariable: '--a' })
     ],
     shortcuts: [
         {
             'sz-full': 'w-full h-full',
             'sz-screen': 'w-screen h-screen',
         }
-    ]
+    ],
+    postprocess: [createRemToPxProcessor()],
 })
