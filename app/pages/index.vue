@@ -18,7 +18,7 @@ div, flex, inline-flex
       <flex class="red"></flex>
     </flex>
 
-    <div sz-full flex="~ col-reverse lg:row">
+    <div size-full flex="~ col-reverse lg:row">
       <inline-flex>
         <p>Hello World</p>
       </inline-flex>

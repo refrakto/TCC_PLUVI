@@ -34,7 +34,6 @@ export default defineConfig({
     ],
     shortcuts: [
         {
-            'sz-full': 'w-full h-full',
             'sz-screen': 'w-screen h-screen',
         }
     ],
