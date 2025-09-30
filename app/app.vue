@@ -18,8 +18,14 @@
   --radius-2xl: 16px;
   --radius-3xl: 24px;
   --radius-4xl: 32px;
-}
 
+  font-feature-settings: 
+    "case" 1,
+    "ss03" 1,
+    "cv05" 1,
+    "cv06" 1,
+    "cv11" 1;
+}
 
 html, body {
   --a: 'p-0 m-0';

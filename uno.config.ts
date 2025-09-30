@@ -35,6 +35,8 @@ export default defineConfig({
     shortcuts: [
         {
             'sz-screen': 'w-screen h-screen',
+            'text-var-big': `[font-feature-settings:'cv12', 'cv13']`,
+            'text-var-mono': `[font-feature-settings:'zero', 'tnum']`,
         }
     ],
     postprocess: [createRemToPxProcessor()],
