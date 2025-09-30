@@ -1,0 +1,5 @@
+{
+    "nuxtr.defaultPackageManager": "pnpm",
+    "vue.suggest.componentNameCasing": "alwaysPascalCase",
+    "nuxtr.vueFiles.style.defaultLanguage": "sass"
+}
