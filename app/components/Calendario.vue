@@ -1,22 +1,22 @@
 <style lang="sass" scoped>
 .diasSemana
-  --a: text-(center lg) font-bold px-3 bg-gray-200  w-18;
+  --a: text-[28px] font-[750] place-content-center items-center px-3 w-18 h-8;
 
 .dias
-  --a: text-(center md) font-bold bg-gray-200 w-full;
+  --a: text-(center [16px]) font-[800] bg-gray-200 w-full;
 
 .linhas
-  --a: flex flex-row justify-evenly items-center nowrap size-full pointer-events-none;
+  --a: flex flex-row justify-evenly items-center size-full pointer-events-none;
   div 
     --a: w-[2px] h-full bg-black;
 </style>
 
 <template>
-  <inline-flex flex-col rounded-xl>
+  <inline-flex flex-col rounded="[20px]" border-2>
 
-    <inline-flex>
+    <inline-flex py-2 bg-gray-200>
       <template v-for="(dia, index) in diasSemanas">
-        <p class="diasSemana" > {{dia}} </p>
+        <flex class="diasSemana" > {{dia}} </flex>
       </template> 
     </inline-flex>
 
@@ -29,11 +29,11 @@
       <template v-for="(coluna, index) in calendario">
         <flex h-fit w-full>
           <template v-for="(dia, index2) in coluna.dias">
-            <p class="dias"> {{dia.js.date()}} </p>
+            <p class="dias" :class="[dia.mesSelecionado ? 'text-black' : 'text-black/60']"> {{dia.js.date()}} </p>
           </template>
         </flex>
 
-        <flex h-10 w-full>
+        <flex h-15 w-full>
           <template v-for="(dia, index2) in coluna.dias">
             <p class="dias"> 
               <!--DEFINIR z-index -->
@@ -49,7 +49,7 @@
 </template>
 
 <script lang="ts" setup>
-var diasSemanas = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+var diasSemanas = ["D", "S", "T", "Q", "Q", "S", "S"];
 
 const indice = ref(0);
 
