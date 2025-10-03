@@ -3,7 +3,7 @@
   --a: text-[28px] font-[750] place-content-center items-center px-3 w-18 h-8;
 
 .dias
-  --a: text-(center [16px]) font-[800] bg-gray-200 w-full;
+  --a: text-(center [16px]) font-[800] bg-gray-200 size-full;
 
 .linhas
   --a: flex flex-row justify-evenly items-center size-full pointer-events-none;
@@ -35,9 +35,9 @@
 
         <flex h-15 w-full>
           <template v-for="(dia, index2) in coluna.dias">
-            <p class="dias"> 
-              <!--DEFINIR z-index -->
-            </p>
+            <flex class="dias">
+              <CalBotaoChuva />
+            </flex>
           </template>
         </flex>
         

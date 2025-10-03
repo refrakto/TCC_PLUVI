@@ -1,6 +1,8 @@
 <style lang="sass" scoped>
-div, flex, inline-flex
-  --a: justify-evenly place-items-center overflow-hidden;
+flex, inline-flex
+  --a: overflow-hidden;
+  &, div
+    --a: justify-evenly place-items-center;
 
 .principal
   --a: flex-col sz-screen gap-auto place-content-start;
@@ -18,7 +20,7 @@ div, flex, inline-flex
       <flex class="red"></flex>
     </flex>
 
-    <div size-full flex="~ col-reverse lg:row">
+    <div size-full flex="~ col-reverse lg:row" overflow-y-auto>
       <inline-flex>
         <p>Hello World</p>
       </inline-flex>
