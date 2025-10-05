@@ -13,8 +13,9 @@ export default defineConfig({
     presets: [
         presetWind4({
             preflights: {
+                reset: true,
                 theme: {
-                    mode: 'on-demand',
+                    mode: true,
                     process: createRemToPxProcessor()
                 }
             }

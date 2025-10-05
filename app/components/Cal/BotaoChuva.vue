@@ -1,12 +1,14 @@
 <style lang="sass" scoped>
-flex
-  --a: bg-black
+button
+  --a: bg-black rounded-[1.25rem] w-[87.5%] h-[50%] transition-all duration-150 ease-in-out;
+
 </style>
 
 <template>
-  <flex size-full>
+  <button flex
+    hover="size-full">
 
-  </flex>
+  </button>
 </template>
 
 <script lang="ts" setup>

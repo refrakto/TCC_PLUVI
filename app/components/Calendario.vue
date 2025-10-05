@@ -1,9 +1,10 @@
 <style lang="sass" scoped>
+
 .diasSemana
   --a: text-[28px] font-[750] place-content-center items-center px-3 w-18 h-8;
 
 .dias
-  --a: text-(center [16px]) font-[800] bg-gray-200 size-full;
+  --a: text-(center [16px]) font-[800] bg-gray-200 place-content-center w-[calc((100%-12px)/7)] size-full;
 
 .linhas
   --a: flex flex-row justify-evenly items-center size-full pointer-events-none;
@@ -27,15 +28,15 @@
       </absolute>
 
       <template v-for="(coluna, index) in calendario">
-        <flex h-fit w-full>
+        <flex h-fit w-full class="gap-[2px]">
           <template v-for="(dia, index2) in coluna.dias">
             <p class="dias" :class="[dia.mesSelecionado ? 'text-black' : 'text-black/60']"> {{dia.js.date()}} </p>
           </template>
         </flex>
 
-        <flex h-15 w-full>
+        <flex h-15 w-full class="gap-[2px]">
           <template v-for="(dia, index2) in coluna.dias">
-            <flex class="dias">
+            <flex class="dias" px-1 pb-3>
               <CalBotaoChuva />
             </flex>
           </template>
