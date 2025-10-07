@@ -12,6 +12,8 @@
   "dependencies": {
     "@unocss/preset-wind4": "^66.5.2",
     "dayjs": "^1.11.18",
+    "drizzle-orm": "^0.44.6",
+    "mysql2": "^3.15.1",
     "nuxt": "^4.1.2",
     "vue": "^3.5.21",
     "vue-router": "^4.5.1"
@@ -20,6 +22,7 @@
     "@iconify-json/lucide": "^1.2.68",
     "@iconify-json/lucide-lab": "^1.2.3",
     "@unocss/nuxt": "66.5.2",
+    "drizzle-kit": "^0.31.5",
     "sass": "^1.93.2",
     "unocss": "^66.5.1"
   }
