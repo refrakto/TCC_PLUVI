@@ -14,24 +14,20 @@ flex, inline-flex
 </style>
 
 <template>
-  <flex class="principal">
+	<flex class="principal">
+		<flex w-full p-5>
+			<flex class="red"></flex>
+		</flex>
 
-    <flex w-full p-5>
-      <flex class="red"></flex>
-    </flex>
-
-    <div size-full flex="~ col-reverse lg:row" overflow-y-auto>
-      <inline-flex>
-        <p>Hello World</p>
-      </inline-flex>
-      <inline-flex>
-        <Calendario />
-      </inline-flex>
-    </div>
-
-  </flex>
+		<div size-full flex="~ col-reverse lg:row" overflow-y-auto>
+			<inline-flex>
+				<p>Hello World</p>
+			</inline-flex>
+			<inline-flex>
+				<Calendario />
+			</inline-flex>
+		</div>
+	</flex>
 </template>
 
-<script lang="ts" setup>
-</script>
-
+<script lang="ts" setup></script>

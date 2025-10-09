@@ -1,5 +1,10 @@
 {
-    "nuxtr.defaultPackageManager": "pnpm",
-    "vue.suggest.componentNameCasing": "alwaysPascalCase",
-    "nuxtr.vueFiles.style.defaultLanguage": "sass"
+   "nuxtr.defaultPackageManager": "pnpm",
+   "vue.suggest.componentNameCasing": "alwaysPascalCase",
+   "nuxtr.vueFiles.style.defaultLanguage": "sass",
+   "editor.formatOnSave": true,
+   "editor.defaultFormatter": "esbenp.prettier-vscode",
+   "editor.tabSize": 3,
+   "prettier.tabWidth": 3,
+   "editor.insertSpaces": false
 }

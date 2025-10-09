@@ -1,5 +1,8 @@
-import { int, mysqlTable } from 'drizzle-orm/mysql-core'
+import { pgTable, integer } from 'drizzle-orm/pg-core'
 
-export const template = mysqlTable('template', {
-    id: int().primaryKey().autoincrement().unique()
+export const template = pgTable('template', {
+	id: integer().primaryKey().unique(),
 })
+
+export type Template = typeof template.$inferInsert
+export type NewTemplate = typeof template.$inferSelect

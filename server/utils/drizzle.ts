@@ -1,17 +1,19 @@
-import { createDatabase } from 'db0';
-import mysql from 'db0/connectors/mysql2';
-import { drizzle } from "db0/integrations/drizzle";
+import 'dotenv/config'
+import { createDatabase } from 'db0'
+import postgresql from 'db0/connectors/postgresql'
+import { drizzle } from 'db0/integrations/drizzle'
+import * as schema from '../database/schema/index'
 
-import * as schema from "../database/schema/index";
-
-const db0 = createDatabase(mysql({
-  database: process.env.MYSQL_DatabaseName,
-  user: process.env.MYSQL_User,
-  password: process.env.MYSQL_Password,
-  host: 'localhost',
-  port: 3306
-}))
-
-export function useDrizzle() {
-    return drizzle<typeof schema>(db0);
+const env = {
+	senha: process.env.POSTGRES_SENHA,
+	usuario: process.env.POSTGRES_USUARIO,
+	nome_db: process.env.POSTGRES_DB_NOME,
 }
+
+const db0 = createDatabase(
+	postgresql({
+		url: `postgresql://${env.usuario}:${env.senha}@localhost:5432/${env.nome_db}`,
+	})
+)
+
+export const useDrizzle = () => drizzle<typeof schema>(db0)

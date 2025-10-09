@@ -8,53 +8,54 @@
 
 .linhas
   --a: flex flex-row justify-evenly items-center size-full pointer-events-none;
-  div 
+  div
     --a: w-[2px] h-full bg-black;
 </style>
 
 <template>
-  <inline-flex flex-col rounded="[20px]" border-2>
+	<inline-flex flex-col rounded="[20px]" border-2>
+		<inline-flex py-2 bg-gray-200>
+			<template v-for="(dia, index) in diasSemanas">
+				<flex class="diasSemana"> {{ dia }} </flex>
+			</template>
+		</inline-flex>
 
-    <inline-flex py-2 bg-gray-200>
-      <template v-for="(dia, index) in diasSemanas">
-        <flex class="diasSemana" > {{dia}} </flex>
-      </template> 
-    </inline-flex>
+		<flex flex-col size-full relative>
+			<absolute class="linhas" z-10>
+				<div v-for="n in 6" :key="n" />
+			</absolute>
 
-    <flex flex-col size-full relative>
+			<template v-for="(coluna, index) in calendario">
+				<flex h-fit w-full class="gap-[2px]">
+					<template v-for="(dia, index2) in coluna.dias">
+						<p
+							class="dias"
+							:class="[
+								dia.mesSelecionado ? 'text-black' : 'text-black/60',
+							]"
+						>
+							{{ dia.js.date() }}
+						</p>
+					</template>
+				</flex>
 
-      <absolute class="linhas" z-10>
-        <div v-for="n in 6" :key="n" />
-      </absolute>
-
-      <template v-for="(coluna, index) in calendario">
-        <flex h-fit w-full class="gap-[2px]">
-          <template v-for="(dia, index2) in coluna.dias">
-            <p class="dias" :class="[dia.mesSelecionado ? 'text-black' : 'text-black/60']"> {{dia.js.date()}} </p>
-          </template>
-        </flex>
-
-        <flex h-15 w-full class="gap-[2px]">
-          <template v-for="(dia, index2) in coluna.dias">
-            <flex class="dias" px-1 pb-3>
-              <CalBotaoChuva />
-            </flex>
-          </template>
-        </flex>
-        
-      </template>
-
-    </flex>
-
-  </inline-flex>
+				<flex h-15 w-full class="gap-[2px]">
+					<template v-for="(dia, index2) in coluna.dias">
+						<flex class="dias" px-1 pb-3>
+							<CalBotaoChuva />
+						</flex>
+					</template>
+				</flex>
+			</template>
+		</flex>
+	</inline-flex>
 </template>
 
 <script lang="ts" setup>
-var diasSemanas = ["D", "S", "T", "Q", "Q", "S", "S"];
+var diasSemanas = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 
-const indice = ref(0);
+const indice = ref(0)
 
-const { calendario, dataSelecionada } = useCalendario(indice);
+const { calendario, dataSelecionada } = useCalendario(indice)
 //criar o resto com flex h-fit tendo as datas e as barras.
 </script>
-
