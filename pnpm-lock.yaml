@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@lucide/lab':
+        specifier: ^0.1.2
+        version: 0.1.2
       '@types/pg':
         specifier: ^8.15.5
         version: 8.15.5
@@ -23,6 +26,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.6
         version: 0.44.6(@types/pg@8.15.5)(mysql2@3.15.1)(pg@8.16.3)
+      lucide-vue-next:
+        specifier: ^0.545.0
+        version: 0.545.0(vue@3.5.22)
       mysql2:
         specifier: ^3.15.1
         version: 3.15.1
@@ -39,12 +45,6 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1(vue@3.5.22)
     devDependencies:
-      '@iconify-json/lucide':
-        specifier: ^1.2.68
-        version: 1.2.68
-      '@iconify-json/lucide-lab':
-        specifier: ^1.2.3
-        version: 1.2.3
       '@unocss/nuxt':
         specifier: 66.5.2
         version: 66.5.2(magicast@0.3.5)(postcss@8.5.6)(vite@7.1.7(@types/node@24.5.2)(jiti@2.6.0)(sass@1.93.2)(terser@5.44.0)(yaml@2.8.1))(webpack@5.101.3(esbuild@0.25.10))
@@ -507,12 +507,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@iconify-json/lucide-lab@1.2.3':
-    resolution: {integrity: sha512-N+8vnVt4IY/6FZi81f6nh5VhJSMYrs5KTVsT2Z/E0Wn7Lu4jJKO5fOfiTVX1YWVI4FFwQ1zVXPFb8kLAwskrjA==}
-
-  '@iconify-json/lucide@1.2.68':
-    resolution: {integrity: sha512-lR5xNJdn2CT0iR7lM25G4SewBO4G2hbr3fTWOc3AE9BspflEcneh02E3l9TBaCU/JOHozTJevWLrxBGypD7Tng==}
-
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
 
@@ -554,6 +548,9 @@ packages:
 
   '@kwsites/promise-deferred@1.1.1':
     resolution: {integrity: sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==}
+
+  '@lucide/lab@0.1.2':
+    resolution: {integrity: sha512-VprF2BJa7ZuTGOhUd5cf8tHJXyL63wdxcGieAiVVoR9hO0YmPsnZO0AGqDiX2/br+/MC6n8BoJcmPilltOXIJA==}
 
   '@mapbox/node-pre-gyp@2.0.0':
     resolution: {integrity: sha512-llMXd39jtP0HpQLVI37Bf1m2ADlEb35GYSh1SDSLsBhR+5iCxiNGlT31yqbNtVHygHAtMy6dWFERpU2JgufhPg==}
@@ -2538,6 +2535,11 @@ packages:
     resolution: {integrity: sha512-Nv9KddBcQSlQopmBHXSsZVY5xsdlZkdH/Iey0BlcBYggMd4two7cZnKOK9vmy3nY0O5RGH99z1PCeTpPqszUYg==}
     engines: {bun: '>=1.0.0', deno: '>=1.30.0', node: '>=8.0.0'}
 
+  lucide-vue-next@0.545.0:
+    resolution: {integrity: sha512-UXOQYVdJ2dmwkC0jawC9D5efCw/vyogTKvPx7gJ8ZzhrDblcP5oUt44CyMgjX1WJX7gG5XxGdB5FrT/sYM637Q==}
+    peerDependencies:
+      vue: '>=3.0.1'
+
   magic-regexp@0.10.0:
     resolution: {integrity: sha512-Uly1Bu4lO1hwHUW0CQeSWuRtzCMNO00CmXtS8N6fyvB3B979GOEEeAkiTUDsmbYLAbvpUS/Kt5c4ibosAzVyVg==}
 
@@ -4206,14 +4208,6 @@ snapshots:
   '@esbuild/win32-x64@0.25.10':
     optional: true
 
-  '@iconify-json/lucide-lab@1.2.3':
-    dependencies:
-      '@iconify/types': 2.0.0
-
-  '@iconify-json/lucide@1.2.68':
-    dependencies:
-      '@iconify/types': 2.0.0
-
   '@iconify/types@2.0.0': {}
 
   '@iconify/utils@3.0.2':
@@ -4275,6 +4269,8 @@ snapshots:
       - supports-color
 
   '@kwsites/promise-deferred@1.1.1': {}
+
+  '@lucide/lab@0.1.2': {}
 
   '@mapbox/node-pre-gyp@2.0.0':
     dependencies:
@@ -6343,6 +6339,10 @@ snapshots:
   lru-cache@7.18.3: {}
 
   lru.min@1.1.2: {}
+
+  lucide-vue-next@0.545.0(vue@3.5.22):
+    dependencies:
+      vue: 3.5.22
 
   magic-regexp@0.10.0:
     dependencies:

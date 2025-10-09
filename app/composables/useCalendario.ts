@@ -13,10 +13,13 @@ const newDia = (js: Dayjs, mesSelecionado: boolean): Dia => ({
 })
 
 export default (indice: Ref<number>) => {
+	const meses = [ 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 	const hoje = dayjs()
 	const dataSelecionada = computed(() =>
 		hoje.month(hoje.month() + indice.value)
 	)
+
+	const mesSelecionado = computed(() => meses[dataSelecionada.value.month()])
 
 	const primeiroDiaMes = computed(() => dataSelecionada.value.startOf('month'))
 	const primeiroDiaSemana = computed(() => primeiroDiaMes.value.day())
@@ -47,5 +50,5 @@ export default (indice: Ref<number>) => {
 		return calendario
 	})
 
-	return { calendario, dias, dataSelecionada, hoje }
+	return { calendario, dias, mesSelecionado, dataSelecionada, hoje }
 }

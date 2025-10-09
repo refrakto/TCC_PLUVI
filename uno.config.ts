@@ -2,7 +2,6 @@ import {
 	defineConfig,
 	presetAttributify,
 	presetTagify,
-	presetIcons,
 	transformerVariantGroup,
 	transformerDirectives,
 } from 'unocss'
@@ -15,16 +14,6 @@ export default defineConfig({
 			preflights: {
 				reset: true,
 				theme: { mode: true, process: createRemToPxProcessor() },
-			},
-		}),
-		presetIcons({
-			collections: {
-				lu: () =>
-					import('@iconify-json/lucide/icons.json').then(i => i.default),
-				lulab: () =>
-					import('@iconify-json/lucide-lab/icons.json').then(
-						i => i.default
-					),
 			},
 		}),
 		presetAttributify(),
