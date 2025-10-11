@@ -3,6 +3,7 @@ import { date, integer, pgTable, serial, varchar } from 'drizzle-orm/pg-core'
 export const usuario = pgTable('template', {
 	id: serial().primaryKey().unique(),
 	nome: varchar({ length: 100 }).notNull(),
+	email: varchar({ length: 100 }).notNull().unique(),
 	senha: varchar({ length: 100 }).notNull(),
 })
 
