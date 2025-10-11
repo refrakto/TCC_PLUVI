@@ -1,8 +1,8 @@
-import { pgTable, integer } from 'drizzle-orm/pg-core'
+import { pgTable, serial } from 'drizzle-orm/pg-core'
 
 export const template = pgTable('template', {
-	id: integer().primaryKey().unique(),
+	id: serial().primaryKey().unique(),
 })
 
-export type Template = typeof template.$inferInsert
-export type NewTemplate = typeof template.$inferSelect
+export type Template = typeof template.$inferSelect
+export type NewTemplate = typeof template.$inferInsert

@@ -17,3 +17,6 @@ const db0 = createDatabase(
 )
 
 export const useDrizzle = () => drizzle<typeof schema>(db0)
+
+
+useDrizzle().select()
