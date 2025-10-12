@@ -1,27 +1,21 @@
-interface User {
-	id: string
-	email: string
-	name: string
-}
-
 interface AuthState {
-	user: User | null
+	usuario: UsuarioSeguro | null
 	token: string | null
-	isAuthenticated: boolean
-	loading: boolean
+	Autenticado: boolean
+	carregando: boolean
 }
 
 export const useAuthStore = defineStore('auth', () => {
 	const state = ref<AuthState>({
-		user: null,
+		usuario: null,
 		token: null,
-		isAuthenticated: false,
-		loading: true,
+		Autenticado: false,
+		carregando: true,
 	})
 
-	function setUser(user: AuthState['user']) {
-		state.value.user = user
-		state.value.isAuthenticated = true
+	function setUsuario(usuario: AuthState['usuario']) {
+		state.value.usuario = usuario
+		state.value.Autenticado = true
 	}
 
 	function setToken(newToken: string) {
@@ -30,9 +24,9 @@ export const useAuthStore = defineStore('auth', () => {
 	}
 
 	function clearAuth() {
-		state.value.user = null
+		state.value.usuario = null
 		state.value.token = null
-		state.value.isAuthenticated = false
+		state.value.Autenticado = false
 		localStorage.removeItem('token')
 	}
 
@@ -44,7 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
 			})
 
 			setToken(resposta.token)
-			setUser(resposta.user)
+			setUsuario(resposta.user)
 			return true
 		} catch (error) {
 			console.error('Login failed:', error)
@@ -54,14 +48,14 @@ export const useAuthStore = defineStore('auth', () => {
 
 	async function cadastro(nome: string, email: string, senha: string) {
 		try {
-			const resposta = await $fetch<any>('/api/auth/cadastro', {
+			const resposta = await $fetch<Cadastro>('/api/auth/cadastro', {
 				method: 'POST',
 				body: { nome, email, senha },
 			})
 
 			// Automatically log in after signup
 			setToken(resposta.token)
-			setUser(resposta.user)
+			setUsuario(resposta.usuario)
 			return { success: true }
 		} catch (error: any) {
 			return {
@@ -90,18 +84,19 @@ export const useAuthStore = defineStore('auth', () => {
 			const token = localStorage.getItem('token')
 			if (!token) return false
 
-			const response = await $fetch<any>('/api/auth/check', {
-				headers: { Authorization: `Bearer ${token}` },
-			})
+			const response = await $fetch<{ usuario: UsuarioSeguro }>(
+				'/api/auth/check',
+				{ headers: { Authorization: `Bearer ${token}` } }
+			)
 
 			setToken(token)
-			setUser(response.user)
+			setUsuario(response.usuario)
 			return true
 		} catch {
 			clearAuth()
 			return false
 		} finally {
-			state.value.loading = false
+			state.value.carregando = false
 		}
 	}
 })
