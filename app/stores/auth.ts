@@ -1,21 +1,16 @@
-interface AuthState {
-	usuario: UsuarioSeguro | null
-	token: string | null
-	Autenticado: boolean
-	carregando: boolean
-}
+
 
 export const useAuthStore = defineStore('auth', () => {
-	const state = ref<AuthState>({
+	const state = ref<EstadoAuth>({
 		usuario: null,
 		token: null,
-		Autenticado: false,
+		autenticado: false,
 		carregando: true,
 	})
 
-	function setUsuario(usuario: AuthState['usuario']) {
+	function setUsuario(usuario: UsuarioPublico) {
 		state.value.usuario = usuario
-		state.value.Autenticado = true
+		state.value.autenticado = true
 	}
 
 	function setToken(newToken: string) {
@@ -26,19 +21,19 @@ export const useAuthStore = defineStore('auth', () => {
 	function clearAuth() {
 		state.value.usuario = null
 		state.value.token = null
-		state.value.Autenticado = false
+		state.value.autenticado = false
 		localStorage.removeItem('token')
 	}
 
-	async function login(email: string, password: string) {
+	async function login(email: string, senha: string) {
 		try {
-			const resposta = await $fetch<any>('/api/auth/login', {
+			const resposta = await $fetch<LoginResponse>('/api/auth/login', {
 				method: 'POST',
-				body: { email, password },
+				body: { email, senha } as LoginRequest,
 			})
 
 			setToken(resposta.token)
-			setUsuario(resposta.user)
+			setUsuario(resposta.usuario)
 			return true
 		} catch (error) {
 			console.error('Login failed:', error)
@@ -46,21 +41,18 @@ export const useAuthStore = defineStore('auth', () => {
 		}
 	}
 
-	async function cadastro(nome: string, email: string, senha: string) {
+	async function cadastro(cadastro: CadastroRequest) {
 		try {
-			const resposta = await $fetch<Cadastro>('/api/auth/cadastro', {
+			const resposta = await $fetch<CadastroResponse>('/api/auth/cadastro', {
 				method: 'POST',
-				body: { nome, email, senha },
+				body: cadastro,
 			})
 
-			// Automatically log in after signup
-			setToken(resposta.token)
-			setUsuario(resposta.usuario)
-			return { success: true }
+			return { success: true, usuario: resposta.usuario }
 		} catch (error: any) {
 			return {
 				success: false,
-				error: error.data?.message || 'Signup failed',
+				error: error.data?.message || 'Cadastro falhou',
 			}
 		}
 	}
@@ -84,13 +76,13 @@ export const useAuthStore = defineStore('auth', () => {
 			const token = localStorage.getItem('token')
 			if (!token) return false
 
-			const response = await $fetch<{ usuario: UsuarioSeguro }>(
+			const resposta = await $fetch<CheckResponse>(
 				'/api/auth/check',
 				{ headers: { Authorization: `Bearer ${token}` } }
 			)
 
 			setToken(token)
-			setUsuario(response.usuario)
+			setUsuario(resposta.usuario)
 			return true
 		} catch {
 			clearAuth()

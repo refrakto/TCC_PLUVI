@@ -23,11 +23,19 @@ export default defineEventHandler(async event => {
 		.setExpirationTime('24h')
 		.sign(env.jwt_secret)
 
-	const usuarioSeguro: UsuarioSeguro = {
-		id: usuario.id,
-		email: usuario.email,
-		nome: usuario.nome,
-	}
+	const permissao =
+		usuario.permissao === 'admin' ? TipoUsuario.ADMIN : TipoUsuario.ESTAGIARIO
 
-	return { token, usuario: usuarioSeguro } as Cadastro
+	let retorno: UsuarioPublico =
+		permissao === TipoUsuario.ADMIN
+			? { nome: usuario.nome, email: usuario.email, permissao }
+			: {
+					nome: usuario.nome,
+					email: usuario.email,
+					permissao,
+					dataInicio: usuario.dataInicio!,
+					dataFim: usuario.dataFim ?? undefined,
+				}
+
+	return { token, usuario: retorno } as LoginResponse
 })

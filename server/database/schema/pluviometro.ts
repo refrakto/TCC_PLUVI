@@ -3,7 +3,7 @@ import { boolean, date, pgTable, serial } from 'drizzle-orm/pg-core'
 export const pluviometro = pgTable('template', {
 	id: serial().primaryKey().unique(),
 	arquivado: boolean().notNull(),
-	dataAquisicao: date()
+	dataAquisicao: date({mode: 'date'})
 })
 
 export type Pluviometro = typeof pluviometro.$inferSelect

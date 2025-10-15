@@ -2,7 +2,7 @@ import { date, pgTable, serial } from 'drizzle-orm/pg-core'
 
 export const chuva = pgTable('template', {
 	id: serial().primaryKey().unique(),
-	data: date().notNull(),
+	data: date({mode: 'date'}).notNull(),
 })
 
 export type Chuva = typeof chuva.$inferSelect

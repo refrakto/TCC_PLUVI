@@ -18,23 +18,14 @@ export default defineEventHandler(async event => {
 		}
 
 		const { payload } = await jwtVerify(token, env.jwt_secret)
-		const usuario: UsuarioSeguro = (
-			await db
-				.select({
-					id: schema.usuario.id,
-					email: schema.usuario.email,
-					nome: schema.usuario.nome,
-				})
-				.from(schema.usuario)
-				.where(eq(schema.usuario.id, payload.id as number))
-		)[0]
 
-		return {
-      success: true,
-      message: 'Desconectado com sucesso'
-    }
-	} catch (error) {
-    console.error('Logout error:', error)
+		if (!payload || typeof payload.id !== 'number') {
+			throw createError({ statusCode: 401, message: 'Token inválido' })
+		}
+
+		return { success: true, message: 'Desconectado com sucesso' }
+	} catch (err) {
+		console.error('Logout error:', err)
 		throw createError({ statusCode: 401, message: 'Erro ao desconectar' })
 	}
 })

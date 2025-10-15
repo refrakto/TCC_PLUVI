@@ -8,18 +8,23 @@ export default defineEventHandler(async event => {
 
 	const token = authHeader?.split(' ')[1]
 
-  if (!token) {
-		throw createError({ statusCode: 401, message: 'Nenhum token providenciado' })
+	if (!token) {
+		throw createError({
+			statusCode: 401,
+			message: 'Nenhum token providenciado',
+		})
 	}
 
 	try {
 		const { payload } = await jwtVerify(token, env.jwt_secret)
-		const usuario: UsuarioSeguro = (
+		const usuario = (
 			await db
 				.select({
-					id: schema.usuario.id,
-					email: schema.usuario.email,
 					nome: schema.usuario.nome,
+					email: schema.usuario.email,
+					permissao: schema.usuario.permissao,
+					dataInicio: schema.usuario.dataInicio,
+					dataFim: schema.usuario.dataFim,
 				})
 				.from(schema.usuario)
 				.where(eq(schema.usuario.id, payload.id as number))
@@ -27,8 +32,26 @@ export default defineEventHandler(async event => {
 
 		if (!usuario) throw new Error('Usuario não encontrado')
 
-		return { usuario }
-	} catch (error) {
+		const { nome, email, dataInicio, dataFim } = usuario
+
+		const permissao =
+			usuario.permissao === 'admin'
+				? TipoUsuario.ADMIN
+				: TipoUsuario.ESTAGIARIO
+
+		let retorno: UsuarioPublico =
+			permissao === TipoUsuario.ADMIN
+				? { nome, email, permissao }
+				: {
+						nome,
+						email,
+						permissao,
+						dataInicio: dataInicio!,
+						dataFim: dataFim ?? undefined,
+					}
+
+		return { usuario: retorno } as CheckResponse
+	} catch (err: any) {
 		throw createError({ statusCode: 401, message: 'Token inválido' })
 	}
 })
