@@ -1,0 +1,17 @@
+/* src/style.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Você pode adicionar seus estilos globais aqui */
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Garante que o container principal da aplicação Vue cubra toda a tela */
+#app {
+    min-height: 100vh;
+}

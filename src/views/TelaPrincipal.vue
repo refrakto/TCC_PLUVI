@@ -1,344 +1,994 @@
-<script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-
-// Dropdown perfil
-const showDropdown = ref(false)
-function toggleDropdown() { showDropdown.value = !showDropdown.value }
-function handleClickOutside(event) {
-  const dropdown = document.querySelector('.profile-dropdown')
-  if (dropdown && !dropdown.contains(event.target)) showDropdown.value = false
-}
-onMounted(() => document.addEventListener('click', handleClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
-
-// Calendário
-const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho','Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-const currentDate = ref(new Date())
-function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate() }
-const daysInMonth = ref(getDaysInMonth(currentDate.value.getFullYear(), currentDate.value.getMonth()))
-function prevMonth() {
-  currentDate.value.setMonth(currentDate.value.getMonth() - 1)
-  daysInMonth.value = getDaysInMonth(currentDate.value.getFullYear(), currentDate.value.getMonth())
-}
-function nextMonth() {
-  currentDate.value.setMonth(currentDate.value.getMonth() + 1)
-  daysInMonth.value = getDaysInMonth(currentDate.value.getFullYear(), currentDate.value.getMonth())
-}
-
-// Registros de chuva
-const rainRecords = ref([])
-const showModal = ref(false)
-const editingRecord = ref(null)
-const selectedDay = ref(null)
-const inputChuva = ref('')
-const inputVazao = ref('')
-
-// Pluviômetros
-const showPluvModal = ref(false)
-const editingPluv = ref(null)
-const inputNomePluv = ref('')
-const inputLat = ref('')
-const inputLng = ref('')
-const inputDescricao = ref('')
-const pluviometros = ref([])
-
-// Inicialização
-onMounted(() => {
-  const savedRecords = localStorage.getItem('rainRecords')
-  if (savedRecords) rainRecords.value = JSON.parse(savedRecords)
-
-  const savedPluv = localStorage.getItem('pluviometros')
-  if (savedPluv) pluviometros.value = JSON.parse(savedPluv)
-
-  daysInMonth.value = getDaysInMonth(currentDate.value.getFullYear(), currentDate.value.getMonth())
-  if (showMap.value) setTimeout(() => initMap(), 100)
-})
-
-function saveToLocalStorage() {
-  localStorage.setItem('rainRecords', JSON.stringify(rainRecords.value))
-  localStorage.setItem('pluviometros', JSON.stringify(pluviometros.value))
-}
-
-// Funções chuva
-function openNewRecordModal() {
-  editingRecord.value = null
-  selectedDay.value = ''
-  inputChuva.value = ''
-  inputVazao.value = ''
-  showModal.value = true
-}
-function openEditRecordModal(record) {
-  editingRecord.value = record
-  selectedDay.value = record.dia
-  inputChuva.value = record.chuva
-  inputVazao.value = record.vazao
-  showModal.value = true
-}
-function saveRecord() {
-  if (!selectedDay.value || inputChuva.value === '' || inputVazao.value === '') {
-    alert('Preencha todos os campos!')
-    return
-  }
-  if (editingRecord.value) {
-    editingRecord.value.chuva = parseFloat(inputChuva.value)
-    editingRecord.value.vazao = parseFloat(inputVazao.value)
-  } else {
-    if (rainRecords.value.some(r => r.dia === selectedDay.value)) {
-      alert('Já existe registro para esse dia!')
-      return
-    }
-    rainRecords.value.push({ dia: selectedDay.value, chuva: parseFloat(inputChuva.value), vazao: parseFloat(inputVazao.value) })
-  }
-  saveToLocalStorage()
-  showModal.value = false
-}
-function deleteRecord() {
-  if (editingRecord.value) {
-    rainRecords.value = rainRecords.value.filter(r => r !== editingRecord.value)
-    saveToLocalStorage()
-    showModal.value = false
-  }
-}
-function hasRain(day) { return rainRecords.value.some(r => r.dia === day) }
-function getRecord(day) { return rainRecords.value.find(r => r.dia === day) }
-
-// Funções pluviômetros
-function openNewPluvModal() {
-  editingPluv.value = null
-  inputNomePluv.value = ''
-  inputLat.value = ''
-  inputLng.value = ''
-  inputDescricao.value = ''
-  showPluvModal.value = true
-}
-function openEditPluvModal(pluv) {
-  editingPluv.value = pluv
-  inputNomePluv.value = pluv.nome
-  inputLat.value = pluv.lat
-  inputLng.value = pluv.lng
-  inputDescricao.value = pluv.descricao
-  showPluvModal.value = true
-}
-function savePluv() {
-  if (!inputNomePluv.value || inputLat.value === '' || inputLng.value === '') {
-    alert('Preencha todos os campos do pluviômetro!')
-    return
-  }
-  const newPluv = {
-    nome: inputNomePluv.value,
-    lat: parseFloat(inputLat.value),
-    lng: parseFloat(inputLng.value),
-    descricao: inputDescricao.value
-  }
-  if (editingPluv.value) Object.assign(editingPluv.value, newPluv)
-  else pluviometros.value.push(newPluv)
-  saveToLocalStorage()
-  showPluvModal.value = false
-  if (showMap.value) setTimeout(() => initMap(), 100)
-}
-function deletePluv() {
-  if (editingPluv.value) {
-    pluviometros.value = pluviometros.value.filter(p => p !== editingPluv.value)
-    saveToLocalStorage()
-    showPluvModal.value = false
-    if (showMap.value) setTimeout(() => initMap(), 100)
-  }
-}
-
-// Mapa
-const showMap = ref(false)
-function initMap() {
-  const map = L.map('map').setView([-22.5128, -44.0006], 17)
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map)
-  pluviometros.value.forEach(p => {
-    L.marker([p.lat, p.lng])
-      .addTo(map)
-      .bindPopup(`<b>${p.nome}</b><br>${p.descricao}`)
-  })
-}
-function toggleMap() {
-  showMap.value = !showMap.value
-  if (showMap.value) setTimeout(() => initMap(), 100)
-}
-</script>
-
 <template>
-  <div class="topbar">
-    <h1 class="title">SIMP IFRJ</h1>
-    <div class="profile-dropdown">
-      <button class="profile-button" @click="toggleDropdown">Meu Perfil</button>
-      <div v-if="showDropdown" class="dropdown-menu">
-        <ul>
-          <li><a href="#">Configurações</a></li>
-          <li><a href="#">Sair</a></li>
-        </ul>
+  <div :class="themeStore.themeClass">
+    <header class="topbar">
+      <h1 class="brand">SIMP - IFRJ</h1>
+      <div class="top-controls">
+        <button class="icon" @click="themeStore.toggleTheme" :title="themeStore.currentTheme === 'dark' ? 'Modo Claro' : 'Modo Escuro'">
+          <component :is="themeStore.currentTheme === 'dark' ? Sun : Moon" />
+        </button>
+        <div class="profile">Meu Perfil</div>
       </div>
-    </div>
-  </div>
+    </header>
 
-  <div class="main-content">
-    <div class="sidebar">
-      <p>{{ rainRecords.length }} chuvas registradas no mês.</p>
-      <p>Total estimado de horas de chuva: {{ rainRecords.length * 2 }} horas</p>
-      <p>Pluviômetros cadastrados: {{ pluviometros.length }}</p>
-      <div class="buttons">
-        <button class="btn-green" @click="openNewRecordModal">Registrar Chuva</button>
-        <button class="btn-green" @click="openNewPluvModal">Adicionar Pluviômetro</button>
-        <button class="btn-green" @click="toggleMap">{{ showMap ? 'Ver Calendário' : 'Ver Mapa' }}</button>
-      </div>
-    </div>
+    <section class="layout">
+      <aside class="left-actions">
+        <button class="action-btn" @click="openNewRecordModal()">Registrar Chuva</button>
+        <button class="action-btn" @click="openNewPluvModal()">Registrar Pluviômetro</button>
+        <button class="action-btn" @click="openEditPluvList()">Editar Pluviômetro</button>
+      </aside>
 
-    <div v-if="!showMap" class="calendar-section">
-      <div class="calendar-header">
-        <button @click="prevMonth">&lt;</button>
-        <h2>{{ currentDate.getFullYear() }}, {{ months[currentDate.getMonth()] }}</h2>
-        <button @click="nextMonth">&gt;</button>
+      <main class="calendar-card" role="region" aria-label="Calendário">
+        <div class="cal-header">
+          <button class="nav-btn" @click="changeMonth(-1)"><ChevronLeft /></button>
+          <div class="month-title">{{ months[currentMonth] }} {{ currentYear }}</div>
+          <button class="nav-btn" @click="changeMonth(1)"><ChevronRight /></button>
+        </div>
+        <div class="weekday-row">
+          <div v-for="d in ['D','S','T','Q','Q','S','S']" :key="d" class="weekday">{{ d }}</div>
+        </div>
+        <div class="grid-days">
+          <div
+            v-for="cell in calendarCells"
+            :key="cell.key"
+            :class="['cell', { empty: !cell.day, rain: cell.day && hasRain(cell.day), today: isToday(cell.day) }]"
+            @click="onCellClick(cell.day)"
+          >
+            <span v-if="cell.day">{{ cell.day }}</span>
+          </div>
+        </div>
+      </main>
+
+      <aside class="right-stats">
+        <p><strong>{{ countThisMonth }}</strong> chuvas registradas no mês.</p>
+        <p>Total estimado de horas de chuva: <strong>{{ estimatedHours }}</strong></p>
+        <p>Pluviômetros cadastrados: <strong>{{ pluviometros.length }}</strong></p>
+        <button class="report-btn" @click="openReportsModal"><BarChart3 /> Gerar Relatórios</button>
+      </aside>
+    </section>
+
+    <section class="map-section">
+      <div class="map-card">
+        <h3 class="map-title">Mapa de Pluviômetros</h3>
+        <div id="map" ref="mapEl" class="mapbox" aria-hidden="false" tabindex="0"></div>
       </div>
-      <div class="calendar">
-        <div
-          v-for="day in daysInMonth"
-          :key="day"
-          class="day"
-          :class="{ rain: hasRain(day) }"
-          @click="hasRain(day) ? openEditRecordModal(getRecord(day)) : null"
-        >
-          {{ day }}
-          <div v-if="hasRain(day)" class="rain-indicator"></div>
+    </section>
+
+    <div v-if="showRainModal" class="modal-overlay" @click.self="closeRainModal">
+      <div class="modal">
+        <h3>{{ editingRain ? 'Editar Chuva - Dia ' + editingRain.dia : 'Registrar Chuva' }}</h3>
+        <label>Dia do mês</label>
+        <select v-model="formRain.day">
+          <option value="">Selecione</option>
+          <option v-for="d in monthDays" :key="d" :value="d">{{ d }}</option>
+        </select>
+        <label>Quantidade (mm)</label>
+        <input type="number" step="0.1" v-model.number="formRain.mm" />
+        <label>Vazão (l/s) (opcional)</label>
+        <input type="number" step="0.01" v-model.number="formRain.vazao" />
+        <div class="modal-actions">
+          <button class="btn primary" @click="saveRain">{{ editingRain ? 'Salvar' : 'Registrar' }}</button>
+          <button class="btn" @click="closeRainModal">Fechar</button>
+          <button v-if="editingRain" class="btn danger" @click="deleteRain">Apagar</button>
         </div>
       </div>
     </div>
 
-    <!-- Mapa + Tabela -->
-    <div v-else class="map-pluv-wrapper">
-      <div id="map" class="map"></div>
-      <div class="pluv-table">
-        <h3>Pluviômetros</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Descrição</th>
-              <th>Latitude</th>
-              <th>Longitude</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(p,index) in pluviometros" :key="p.nome" :class="{ 'even-row': index % 2 === 0 }">
-              <td>{{ p.nome }}</td>
-              <td>{{ p.descricao }}</td>
-              <td>{{ p.lat }}</td>
-              <td>{{ p.lng }}</td>
-              <td>
-                <button class="btn-small" @click="openEditPluvModal(p)">Editar</button>
-                <button class="btn-delete-small" @click="deletePluv(p)">Apagar</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div v-if="showPluvList" class="modal-overlay" @click.self="closePluvList">
+      <div class="modal">
+        <h3>Selecionar Pluviômetro para Editar</h3>
+        <div v-if="pluviometros.length === 0">
+          <p>Nenhum pluviômetro cadastrado.</p>
+        </div>
+        <ul v-else class="pluv-list">
+          <li v-for="p in pluviometros" :key="p.id" class="pluv-item">
+            <div class="pluv-info">
+              <strong>{{ p.nome }}</strong><br />
+              <small>{{ p.descricao || 'Sem descrição' }}</small><br />
+              <small>({{ p.lat }}, {{ p.lng }})</small>
+            </div>
+            <button class="edit-icon-btn" @click="selectPluvToEdit(p)" title="Editar Pluviômetro">
+              <Pencil :size="16" />
+            </button>
+          </li>
+        </ul>
+        <div class="modal-actions">
+          <button class="btn" @click="closePluvList">Fechar</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Modal Chuva -->
-  <div v-if="showModal" class="modal-overlay">
-    <div class="modal">
-      <h3 v-if="!editingRecord">Registrar Chuva</h3>
-      <h3 v-else>Editar Chuva - Dia {{ editingRecord.dia }}</h3>
-      <div class="modal-body">
-        <label>Dia do mês:</label>
-        <select v-model="selectedDay">
-          <option disabled value="">Selecione</option>
-          <option v-for="d in daysInMonth" :key="d" :value="d">{{ d }}</option>
-        </select>
-        <label>Quantidade de chuva (mm):</label>
-        <input type="number" min="0" step="0.1" v-model="inputChuva" />
-        <label>Vazão do corpo hídrico (l/s):</label>
-        <input type="number" min="0" step="0.01" v-model="inputVazao" />
-      </div>
-      <div class="modal-actions">
-        <button class="btn-green" @click="saveRecord">{{ editingRecord ? 'Salvar Alterações' : 'Registrar' }}</button>
-        <button class="btn-gray" @click="showModal = false">Cancelar</button>
-        <button v-if="editingRecord" class="btn-delete" @click="deleteRecord">Apagar Registro</button>
+    <div v-if="showPluvModal" class="modal-overlay" @click.self="closePluvModal">
+      <div class="modal">
+        <h3>{{ editingPluv ? 'Editar Pluviômetro' : 'Registrar Pluviômetro' }}</h3>
+        <label>Nome</label>
+        <input v-model="formPluv.nome" type="text" />
+        <label>Latitude</label>
+        <input v-model="formPluv.lat" type="number" step="0.000001" />
+        <label>Longitude</label>
+        <input v-model="formPluv.lng" type="number" step="0.000001" />
+        <label>Descrição</label>
+        <input v-model="formPluv.descricao" type="text" />
+        <div class="modal-actions">
+          <button class="btn primary" @click="savePluv">{{ editingPluv ? 'Salvar' : 'Adicionar' }}</button>
+          <button class="btn" @click="closePluvModal">Fechar</button>
+          <button v-if="editingPluv" class="btn danger" @click="deletePluv">Apagar</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Modal Pluviômetro -->
-  <div v-if="showPluvModal" class="modal-overlay">
-    <div class="modal">
-      <h3 v-if="!editingPluv">Adicionar Pluviômetro</h3>
-      <h3 v-else>Editar Pluviômetro - {{ editingPluv.nome }}</h3>
-      <div class="modal-body">
-        <label>Nome:</label>
-        <input type="text" v-model="inputNomePluv" />
-        <label>Latitude:</label>
-        <input type="number" step="0.0001" v-model="inputLat" />
-        <label>Longitude:</label>
-        <input type="number" step="0.0001" v-model="inputLng" />
-        <label>Descrição:</label>
-        <input type="text" v-model="inputDescricao" />
-      </div>
-      <div class="modal-actions">
-        <button class="btn-green" @click="savePluv">{{ editingPluv ? 'Salvar Alterações' : 'Adicionar' }}</button>
-        <button class="btn-gray" @click="showPluvModal = false">Cancelar</button>
-        <button v-if="editingPluv" class="btn-delete" @click="deletePluv">Apagar</button>
+    <div v-if="showReports" class="modal-overlay" @click.self="closeReportsModal">
+      <div class="modal large">
+        <h3>Relatórios</h3>
+        <div class="report-controls">
+          <label>Período</label>
+          <select v-model="reportPeriod">
+            <option value="month">Mês</option>
+            <option value="semester">Semestre</option>
+            <option value="year">Ano</option>
+          </select>
+          <button class="btn" @click="renderCharts">Gerar</button>
+        </div>
+        <div class="charts">
+          <div class="chart-card">
+            <h4>Acumulado</h4>
+            <div class="chart-wrapper"><canvas ref="accCanvas"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h4>Comparativo por Pluviômetro</h4>
+            <div class="chart-wrapper"><canvas ref="compCanvas"></canvas></div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" @click="closeReportsModal">Fechar</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
+<script setup lang="ts">
+/* ------------------------------------------------------------------------- */
+/* IMPORTS E SETUP                               */
+/* ------------------------------------------------------------------------- */
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
+import Chart from 'chart.js/auto'
+// @ts-ignore
+import L from 'leaflet'
+import { useThemeStore } from '../stores/theme' // Importação do Pinia Store
+import { ChevronLeft, ChevronRight, Sun, Moon, BarChart3, Pencil } from 'lucide-vue-next'
+
+/* --- CORREÇÃO DE ÍCONE DO LEAFLET EM AMBIENTES VITE --- */
+// @ts-ignore
+delete L.Icon.Default.prototype._getIconUrl;
+// @ts-ignore
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"></svg>',
+  iconUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"></svg>',
+  shadowUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"></svg>',
+});
+/* -------------------------------------------------------- */
+
+
+/* ------------------------------------------------------------------------- */
+/* PINIA STORE INICIALIZAÇÃO                               */
+/* ------------------------------------------------------------------------- */
+const themeStore = useThemeStore() // Inicializa o store
+
+
+/* ------------------------------------------------------------------------- */
+/* TYPES E STORAGE */
+/* ------------------------------------------------------------------------- */
+type Rain = {
+  id: string
+  dia: number
+  mes: number
+  ano: number
+  mm: number
+  vazao: number
+  pluvId?: string | null
+}
+type Pluv = {
+  id: string
+  nome: string
+  lat: number
+  lng: number
+  descricao?: string
+}
+
+const rainRecords = ref<Rain[]>(
+  JSON.parse(localStorage.getItem('rainRecords') || '[]')
+)
+const pluviometros = ref<Pluv[]>(
+  JSON.parse(localStorage.getItem('pluviometros') || '[]')
+)
+
+watch([rainRecords, pluviometros], () => {
+  localStorage.setItem('rainRecords', JSON.stringify(rainRecords.value))
+  localStorage.setItem('pluviometros', JSON.stringify(pluviometros.value))
+}, { deep: true })
+
+
+/* ------------------------------------------------------------------------- */
+/* CALENDAR, STATS, MODALS, MAP, REPORTS */
+/* ------------------------------------------------------------------------- */
+const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+const currentDate = ref(new Date())
+const currentMonth = computed(() => currentDate.value.getMonth())
+const currentYear = computed(() => currentDate.value.getFullYear())
+
+function changeMonth(delta: number) {
+  currentDate.value = new Date(currentYear.value, currentMonth.value + delta, 1)
+}
+
+const monthDays = computed(() => new Date(currentYear.value, currentMonth.value + 1, 0).getDate())
+
+const calendarCells = computed(() => {
+  const firstDow = new Date(currentYear.value, currentMonth.value, 1).getDay()
+  const total = monthDays.value
+  const cells: { key: string; day: number | null }[] = []
+  for (let i = 0; i < firstDow; i++) cells.push({ key: `b${i}`, day: null })
+  for (let d = 1; d <= total; d++) cells.push({ key: `d${d}`, day: d })
+  while (cells.length % 7 !== 0) cells.push({ key: `t${cells.length}`, day: null })
+  return cells
+})
+
+function isToday(day: number | null) {
+  if (!day) return false
+  const now = new Date()
+  return now.getDate() === day && now.getMonth() === currentMonth.value && now.getFullYear() === currentYear.value
+}
+
+function hasRain(day: number | null) {
+  if (!day) return false
+  return rainRecords.value.some(r => r.dia === day && r.mes === currentMonth.value && r.ano === currentYear.value)
+}
+
+function getRecord(day: number | null) {
+  if (!day) return null
+  return rainRecords.value.find(r => r.dia === day && r.mes === currentMonth.value && r.ano === currentYear.value)
+}
+
+function onCellClick(day: number | null) {
+  if (!day) return
+  const clicked = new Date(currentYear.value, currentMonth.value, day)
+  if (clicked > new Date()) {
+    alert('Não é possível registrar chuva em datas futuras');
+    return
+  }
+  const rec = getRecord(day)
+  if (rec) openEditRecordModal(rec)
+  else openNewRecordModal(day)
+}
+
+const countThisMonth = computed(() => rainRecords.value.filter(r => r.mes === currentMonth.value && r.ano === currentYear.value).length)
+const estimatedHours = computed(() => countThisMonth.value * 2)
+
+const showRainModal = ref(false)
+const editingRain = ref<Rain | null>(null)
+const formRain = reactive<{ day: number | string; mm: number | string; vazao: number | string }>({ day: '', mm: '', vazao: '' })
+
+function openNewRecordModal(day?: number | null) {
+  if (day) {
+    const clicked = new Date(currentYear.value, currentMonth.value, day)
+    if (clicked > new Date()) {
+      alert('Não é possível registrar chuva em datas futuras');
+      return
+    }
+    formRain.day = day
+  } else formRain.day = ''
+  formRain.mm = ''; formRain.vazao = ''
+  editingRain.value = null
+  showRainModal.value = true
+}
+
+function openEditRecordModal(r: Rain) {
+  editingRain.value = r
+  formRain.day = r.dia; formRain.mm = r.mm; formRain.vazao = r.vazao
+  showRainModal.value = true
+}
+
+function closeRainModal() {
+  showRainModal.value = false; editingRain.value = null; formRain.day = ''; formRain.mm = ''; formRain.vazao = ''
+}
+
+function saveRain() {
+  if (formRain.day === '' || formRain.mm === '') {
+    alert('Preencha dia e quantidade');
+    return
+  }
+  const d = Number(formRain.day)
+  const dateClicked = new Date(currentYear.value, currentMonth.value, d)
+  if (dateClicked > new Date()) {
+    alert('Não é possível registrar chuva em datas futuras');
+    return
+  }
+  const base = {
+    dia: d,
+    mes: currentMonth.value,
+    ano: currentYear.value,
+    mm: Number(formRain.mm),
+    vazao: Number(formRain.vazao || 0)
+  }
+  if (editingRain.value) Object.assign(editingRain.value, base)
+  else {
+    if (rainRecords.value.some(r => r.dia === d && r.mes === currentMonth.value && r.ano === currentYear.value)) {
+      alert('Já existe registro para esse dia');
+      return
+    }
+    const pluvId = pluviometros.value.length > 0 ? pluviometros.value[0].id : null
+    rainRecords.value.push({ id: String(Date.now() + Math.random()), ...base, pluvId: pluvId })
+  }
+  closeRainModal()
+}
+
+function deleteRain() {
+  if (!editingRain.value) return
+  rainRecords.value = rainRecords.value.filter(r => r.id !== editingRain.value!.id)
+  closeRainModal()
+}
+
+const showPluvModal = ref(false)
+const editingPluv = ref<Pluv | null>(null)
+const formPluv = reactive<{ nome: string; lat: number | string; lng: number | string; descricao: string }>({ nome: '', lat: '', lng: '', descricao: '' })
+
+function openNewPluvModal(prefill?: { lat: number, lng: number }) {
+  editingPluv.value = null
+  formPluv.nome = ''; formPluv.descricao = '';
+  formPluv.lat = prefill ? prefill.lat : '';
+  formPluv.lng = prefill ? prefill.lng : ''
+  showPluvModal.value = true
+}
+
+function openEditPluvModal(p: Pluv) {
+  editingPluv.value = p;
+  formPluv.nome = p.nome;
+  formPluv.lat = p.lat;
+  formPluv.lng = p.lng;
+  formPluv.descricao = p.descricao || '';
+  showPluvModal.value = true
+}
+
+function closePluvModal() {
+  showPluvModal.value = false;
+  editingPluv.value = null;
+  formPluv.nome = '';
+  formPluv.lat = '';
+  formPluv.lng = '';
+  formPluv.descricao = ''
+}
+
+function savePluv() {
+  if (!formPluv.nome || formPluv.lat === '' || formPluv.lng === '') {
+    alert('Preencha todos os campos');
+    return
+  }
+  const newP: Pluv = editingPluv.value
+    ? {
+      ...editingPluv.value,
+      nome: formPluv.nome,
+      lat: Number(formPluv.lat),
+      lng: Number(formPluv.lng),
+      descricao: formPluv.descricao
+    }
+    : {
+      id: String(Date.now() + Math.random()),
+      nome: formPluv.nome,
+      lat: Number(formPluv.lat),
+      lng: Number(formPluv.lng),
+      descricao: formPluv.descricao
+    }
+
+  if (editingPluv.value) {
+    const idx = pluviometros.value.findIndex(x => x.id === editingPluv.value!.id)
+    if (idx >= 0) pluviometros.value[idx] = newP
+  } else pluviometros.value.push(newP)
+
+  closePluvModal()
+  refreshMarkers()
+}
+
+function deletePluv() {
+  if (!editingPluv.value) return;
+  const deletedId = editingPluv.value!.id
+  pluviometros.value = pluviometros.value.filter(p => p.id !== deletedId);
+  rainRecords.value = rainRecords.value.map(r => r.pluvId === deletedId ? { ...r, pluvId: null } : r)
+  closePluvModal();
+  refreshMarkers()
+}
+
+const showPluvList = ref(false);
+
+function openEditPluvList() {
+  showPluvList.value = true;
+}
+
+function closePluvList() {
+  showPluvList.value = false;
+}
+
+// Essa função é chamada pelo ícone de caneta
+function selectPluvToEdit(p: Pluv) {
+  closePluvList();
+  nextTick(() => {
+    openEditPluvModal(p);
+  })
+}
+
+const mapEl = ref<HTMLDivElement | null>(null)
+// @ts-ignore
+let map: L.Map | null = null
+// @ts-ignore
+let markersLayer: L.LayerGroup | null = null
+
+function initMap() {
+  if (!mapEl.value) return
+  
+  if (map) {
+    map.remove()
+    map = null
+  }
+
+  // @ts-ignore
+  map = L.map(mapEl.value).setView([-22.5128, -44.0006], 14)
+
+  // @ts-ignore
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map)
+  
+  // @ts-ignore
+  markersLayer = L.layerGroup().addTo(map)
+
+  map.on('click', (e: L.LeafletMouseEvent) => {
+    const lat = Number(e.latlng.lat.toFixed(6));
+    const lng = Number(e.latlng.lng.toFixed(6))
+    openNewPluvModal({ lat, lng })
+  })
+  
+  refreshMarkers()
+}
+
+function refreshMarkers() {
+  if (!map || !markersLayer) return;
+
+  markersLayer.clearLayers();
+  
+  // @ts-ignore
+  const icon = L.divIcon({
+    html: '<div class="pluv-icon"></div>',
+    className: 'pluv-marker-wrapper',
+    iconSize: [18, 18],
+    iconAnchor: [9, 18],
+  });
+
+  pluviometros.value.forEach((p) => {
+    // @ts-ignore
+    const m = L.marker([p.lat, p.lng], { icon }).addTo(markersLayer!);
+    m.bindPopup(`<b>${p.nome}</b><br>${p.descricao || ''}`);
+  });
+}
+
+const showReports = ref(false) // Variável reativa para o botão funcionar
+const reportPeriod = ref<'month' | 'semester' | 'year'>('month')
+const accCanvas = ref<HTMLCanvasElement | null>(null)
+const compCanvas = ref<HTMLCanvasElement | null>(null)
+let accChart: Chart | null = null
+let compChart: Chart | null = null
+
+function openReportsModal() {
+  showReports.value = true
+  nextTick(() => {
+    setTimeout(() => {
+      if (!accChart && !compChart) renderCharts()
+    }, 60)
+  })
+}
+
+function closeReportsModal() {
+  showReports.value = false
+  if (accChart) { accChart.destroy(); accChart = null }
+  if (compChart) { compChart.destroy(); compChart = null }
+}
+
+function accumulateData(period: 'month' | 'semester' | 'year') {
+  if (period === 'month') {
+    const days = Array.from({ length: monthDays.value }, (_, i) => i + 1)
+    const vals = days.map(d => {
+      const rec = rainRecords.value.find(r => r.dia === d && r.mes === currentMonth.value && r.ano === currentYear.value)
+      return rec ? rec.mm : 0
+    })
+    return { labels: days.map(String), values: vals }
+  }
+  if (period === 'semester') {
+    const y = currentYear.value;
+    const m = currentMonth.value;
+    const start = m < 6 ? 0 : 6
+    const monthsRange = Array.from({ length: 6 }, (_, i) => start + i)
+    const vals = monthsRange.map(mi => rainRecords.value.filter(r => r.mes === mi && r.ano === y).reduce((s, x) => s + x.mm, 0))
+    return { labels: monthsRange.map(i => months[i]), values: vals }
+  }
+  const vals = months.map((_, mi) => rainRecords.value.filter(r => r.mes === mi && r.ano === currentYear.value).reduce((s, x) => s + x.mm, 0))
+  return { labels: months, values: vals }
+}
+
+function compareData(period: 'month' | 'semester' | 'year') {
+  const labels = pluviometros.value.map(p => p.nome || p.id)
+  const values = pluviometros.value.map(p => {
+    if (period === 'month') return rainRecords.value.filter(r => r.pluvId === p.id && r.mes === currentMonth.value && r.ano === currentYear.value).reduce((s, x) => s + x.mm, 0)
+    if (period === 'semester') {
+      const start = currentMonth.value < 6 ? 0 : 6;
+      const monthsRange = Array.from({ length: 6 }, (_, i) => start + i);
+      return rainRecords.value.filter(r => r.pluvId === p.id && r.ano === currentYear.value && monthsRange.includes(r.mes)).reduce((s, x) => s + x.mm, 0)
+    }
+    return rainRecords.value.filter(r => r.pluvId === p.id && r.ano === currentYear.value).reduce((s, x) => s + x.mm, 0)
+  })
+  return { labels, values }
+}
+
+function renderCharts() {
+  const acc = accumulateData(reportPeriod.value)
+  const comp = compareData(reportPeriod.value)
+
+  if (accChart) { accChart.destroy(); accChart = null }
+  if (compChart) { compChart.destroy(); compChart = null }
+
+  if (accCanvas.value) {
+    accCanvas.value.parentElement!.style.height = '220px'
+    accChart = new Chart(accCanvas.value.getContext('2d') as CanvasRenderingContext2D, {
+      type: 'bar',
+      data: {
+        labels: acc.labels,
+        datasets: [{
+          label: 'mm de chuva',
+          data: acc.values,
+          backgroundColor: '#6fbfff'
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    })
+  }
+  if (compCanvas.value) {
+    compCanvas.value.parentElement!.style.height = '220px'
+    compChart = new Chart(compCanvas.value.getContext('2d') as CanvasRenderingContext2D, {
+      type: 'pie',
+      data: {
+        labels: comp.labels,
+        datasets: [{
+          data: comp.values,
+          backgroundColor: comp.labels.map((_, i) => `hsl(${(i * 60) % 360} 70% 60%)`)
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    })
+  }
+}
+
+/* ------------------------------------------------------------------------- */
+/* LIFECYCLE */
+/* ------------------------------------------------------------------------- */
+onMounted(() => {
+  initMap()
+})
+
+watch(pluviometros, () => {
+  nextTick(() => {
+    refreshMarkers()
+  })
+}, { deep: true })
+</script>
+
 <style scoped>
-.main-content { display:flex; flex-direction:row; justify-content:flex-start; padding:110px 30px 40px 30px; gap:30px; flex-wrap:wrap; font-family:Arial,sans-serif; }
-.sidebar { width:38%; min-width:250px; }
-.sidebar p { font-size:18px; margin-bottom:12px; }
-.buttons { margin-top:20px; display:flex; flex-direction:column; gap:12px; }
+/* --- IMPORTANTE: GARANTE QUE OS ESTILOS DO MAPA LEAFLET SEJAM CARREGADOS --- */
+@import 'leaflet/dist/leaflet.css';
+/* -------------------------------------------------------------------------- */
 
-.btn-green { background-color:#6fff78; border:none; border-radius:20px; padding:10px 22px; font-weight:bold; cursor:pointer; transition:.2s; }
-.btn-green:hover { filter:brightness(0.9); }
-.btn-gray { background-color:#d9d9d9; border:none; border-radius:20px; padding:10px 22px; font-weight:bold; cursor:not-allowed; }
-.btn-delete { background-color:#ff4c4c; border:none; border-radius:20px; padding:10px 22px; font-weight:bold; cursor:pointer; color:white; margin-left:auto; transition:.2s; }
-.btn-delete:hover { filter:brightness(0.8); }
+/* --- variáveis / base --- */
+.tela-root {
+  min-height: 100vh;
+  font-family: Inter, Arial, sans-serif;
+  background: #222;
+  color: #fff;
+  transition: background 0.3s, color 0.3s; 
+}
 
-.btn-small { padding:4px 8px; font-size:12px; border-radius:6px; margin-right:4px; }
-.btn-delete-small { padding:4px 8px; font-size:12px; border-radius:6px; background-color:#ff4c4c; color:white; border:none; cursor:pointer; }
-.btn-delete-small:hover { filter:brightness(0.8); }
+.tela-root.light {
+  background: #f1f3f5;
+  color: #111;
+}
 
-.calendar-section { min-width:280px; max-width:480px; background-color:#f5f5f5; padding:20px 24px; border-radius:20px; display:flex; flex-direction:column; align-items:center; margin:0 auto; }
-.calendar-header { display:flex; justify-content:center; align-items:center; gap:16px; margin-bottom:20px; width:100%; }
-.calendar { display:grid; grid-template-columns:repeat(7,52px); gap:10px; width:424px; }
-.day { width:52px; height:52px; background-color:#d9d9d9; display:flex; justify-content:center; align-items:center; border-radius:14px; font-weight:bold; cursor:pointer; position:relative; font-size:17px; }
-.day.rain { background-color:#6fbfff; }
-.rain-indicator { position:absolute; bottom:7px; width:14px; height:14px; background-color:#0047ab; border-radius:50%; }
+/* topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 36px;
+}
 
-.topbar { width:100%; position:fixed; top:0; left:0; padding:.5rem 1.5rem; background-color:white; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; z-index:10; border-bottom:1px solid #ccc; }
-.topbar h1 { font-size:28px; font-weight:bold; }
-.profile-button { background-color:#6fff78; border:none; padding:8px 18px; border-radius:20px; font-weight:bold; cursor:pointer; }
+.brand {
+  font-size: 44px;
+  font-weight: 800;
+  margin: 0;
+}
 
-.modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,.4); display:flex; justify-content:center; align-items:center; z-index:2000; }
-.modal { background-color:white; padding:24px 30px; border-radius:12px; max-width:420px; width:90%; box-shadow:0 8px 20px rgba(0,0,0,.15); }
-.modal-body { margin-top:15px; display:flex; flex-direction:column; gap:14px; }
-.modal-body label { font-weight:bold; }
-.modal-body input, .modal-body select { padding:8px 12px; font-size:16px; border-radius:8px; border:1px solid #ccc; width:100%; }
-.modal-actions { margin-top:20px; display:flex; justify-content:flex-end; gap:15px; }
+.top-controls {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
 
-.map-pluv-wrapper { display:flex; gap:20px; width:100%; flex-wrap:wrap; }
-.map { flex:2; min-height:400px; border-radius:10px; }
-.pluv-table { flex:1; overflow-x:auto; max-height:400px; }
-.pluv-table table { width:100%; border-collapse:collapse; }
-.pluv-table th, .pluv-table td { border:1px solid #ccc; padding:8px; text-align:left; }
-.pluv-table th { background-color:#f0f0f0; }
-.pluv-table tr.even-row { background-color:#f9f9f9; }
-.pluv-table h3 { text-align:center; margin-bottom:10px; }
+.icon {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
 
-@media (max-width:768px) {
-  .main-content { flex-direction:column; padding:120px 20px 20px 20px; }
-  .sidebar { width:100%; }
-  .calendar-section { width:100%; margin-top:20px; }
-  .calendar { grid-template-columns:repeat(7,1fr); gap:6px; justify-content:center; }
-  .map-pluv-wrapper { flex-direction:column; }
-  .map { width:100%; min-height:300px; }
-  .pluv-table { width:100%; max-height:none; margin-top:20px; }
-  .topbar { padding:.5rem 1rem; }
+/* layout grid */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  gap: 28px;
+  padding: 10px 40px;
+  align-items: start;
+}
+
+.left-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 18px;
+}
+
+.action-btn {
+  background: #6fbfff;
+  color: #fff;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 28px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* calendar card (COM CORREÇÃO DE TAMANHO) */
+.calendar-card {
+  /* NOVO: Limita o tamanho máximo e centraliza o calendário na coluna do grid */
+  max-width: 700px; /* Tamanho máximo para que não fique gigante */
+  margin: 0 auto;  /* Centraliza o card dentro da coluna '1fr' */
+  width: 100%;     /* Garante que ele utilize 100% do espaço até o max-width */
+  
+  /* Estilos visuais mantidos */
+  background: #595959;
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.tela-root.light .calendar-card {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.cal-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: inherit; 
+}
+
+.month-title {
+  font-weight: 800;
+  font-size: 18px;
+  color: inherit;
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+}
+
+/* CORRIGIDO: usa 1fr e gap 12px */
+.weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #9cc5ea;
+  font-weight: 700;
+  text-align: center;
+}
+.tela-root.light .weekday-row {
+  color: #555;
+}
+
+/* CORRIGIDO: usa 1fr */
+.grid-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+
+/* A CORREÇÃO PRINCIPAL: USO DE ASPECT-RATIO */
+.cell {
+  aspect-ratio: 1 / 1; /* Garante que a célula seja um quadrado perfeito */
+  
+  background: #333; 
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  cursor: pointer;
+  color: #fff; 
+}
+
+.tela-root.light .cell {
+    background: #e9ecef;
+    color: #111;
+}
+
+.cell.empty {
+  background: transparent;
+  cursor: default;
+  color: transparent;
+  box-shadow: none;
+}
+
+.cell.rain {
+  background: #6fbfff; /* Fundo azul brilhante */
+  color: #111; /* Texto preto para bom contraste no azul */
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+}
+
+.tela-root.light .cell.rain {
+  background: #6fbfff; /* FORÇA o fundo azul no modo claro */
+  color: #fff; /* Altera o texto para BRANCO para melhor contraste com o azul no modo claro */
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1); 
+}
+
+.cell.today {
+  outline: 3px solid rgba(255, 255, 255, 0.06);
+}
+.tela-root.light .cell.today {
+  outline: 3px solid rgba(0, 0, 0, 0.1);
+}
+
+/* right stats */
+.right-stats {
+  padding-top: 18px;
+}
+
+.report-btn {
+  margin-top: 18px;
+  background: #6fbfff;
+  color: #fff;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* map */
+.map-section {
+  display: flex;
+  justify-content: center;
+  padding: 18px 36px 48px 36px;
+}
+
+.map-card {
+  width: 70%;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 12px 14px;
+  text-align: center;
+  transition: background 0.3s;
+}
+
+.tela-root.light .map-card {
+  background: #fff;
+  border: 1px solid #eee;
+  color: #111;
+}
+
+.map-title {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.mapbox {
+  height: 320px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* marker icon */
+.pluv-marker-wrapper .pluv-icon {
+  width: 18px;
+  height: 18px;
+  background: #6fbfff;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.tela-root.light .pluv-marker-wrapper .pluv-icon {
+  border: 2px solid #111;
+}
+
+.pluv-marker-wrapper .pluv-icon:hover {
+  transform: scale(1.2);
+}
+
+/* modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+.modal {
+  background: #3a3a3a;
+  color: #fff;
+  padding: 18px;
+  border-radius: 12px;
+  min-width: 320px;
+  max-width: 92%;
+  transition: background 0.3s, color 0.3s;
+}
+
+.tela-root.light .modal {
+  background: #fff;
+  color: #111;
+  border: 1px solid #eee;
+}
+
+.modal.large {
+  min-width: 780px;
+}
+
+.modal label {
+  display: block;
+  margin-top: 8px;
+  font-weight: 700
+}
+
+/* Inputs e selects - Ajuste de tema */
+.tela-root select,
+.tela-root input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  margin-top: 6px;
+  background-color: #2b2b2b;
+  color: #fff;
+  transition: background 0.3s, color 0.3s;
+}
+
+.tela-root.light select,
+.tela-root.light input {
+  background-color: #fff;
+  color: #111;
+  border: 1px solid #ccc;
+}
+/* Garante que as opções do select fiquem legíveis */
+.tela-root select option {
+  background-color: #2b2b2b;
+  color: #fff;
+}
+
+.tela-root.light select option {
+  background-color: #fff;
+  color: #111;
+}
+
+.modal-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn.primary {
+  background: #6fbfff;
+  color: #111;
+}
+
+.btn.danger {
+  background: #ff5c5c;
+  color: #fff;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ESTILOS: LISTA DE PLUVIÔMETROS PARA EDIÇÃO (COM ÍCONE) */
+/* -------------------------------------------------------------------------- */
+.pluv-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.pluv-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: default; 
+  transition: background 0.2s;
+  
+  /* Adaptação de cor no tema escuro */
+  background: #444; 
+}
+
+/* Adaptação de cor no tema claro */
+.tela-root.light .pluv-item {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.pluv-info {
+  flex-grow: 1; /* Permite que a informação ocupe o espaço */
+}
+
+.edit-icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  color: #6fbfff; /* Cor do seu tema principal */
+}
+
+.edit-icon-btn:hover {
+  background: rgba(111, 191, 255, 0.2); /* Fundo azul claro ao passar o mouse */
+}
+
+.tela-root.light .edit-icon-btn {
+  color: #111; /* Ícone escuro no modo claro, se preferir */
+}
+
+.tela-root.light .edit-icon-btn:hover {
+  background: #e9ecef; 
+}
+/* -------------------------------------------------------------------------- */
+
+
+/* charts */
+.charts {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.chart-card {
+  flex: 1;
+  min-height: 260px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  padding: 8px;
+  transition: background 0.3s;
 }
 </style>

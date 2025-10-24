@@ -1,43 +1,95 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// Função que navega para a rota da Tela Principal: /inicial
+function enterAsGuest() {
+  router.push('/inicial') 
+}
+
+function handleLogin() {
+    // AQUI vai a sua lógica de autenticação de usuário e senha (back-end)
+    console.log("Tentativa de Login...");
+    // Se for bem-sucedido, chame: router.push('/inicial')
+}
 </script>
 
 <template>
-    <div class="mainBox rounded-3xl">
-        <input type="email" name="email" placeholder="Email">
-        <div class="gap-y-2 grid auto-rows-auto">
-          <input type="password" name="senha" placeholder="Senha">
-          <a class="pl-4">Esqueci minha senha...</a>
-        </div>
-
-        <div class="gap-x-8 gap-y-4 flex flex-wrap basis-full">
-            <button class="bg-green-400">Iniciar Sessão</button>
-            <button class="bg-green-400">Cadastrar</button>
-        </div>
-        <button class="bg-sky-400 ">Entrar como Visitante</button>
-      </div>
+  <div class="login-container">
+    <h2>Acesso ao Sistema</h2>
+    <form @submit.prevent="handleLogin">
+        <input type="text" placeholder="Usuário" class="input-field" />
+        <input type="password" placeholder="Senha" class="input-field" />
+        
+        <button type="submit" class="btn primary">Entrar</button>
+    </form>
+    
+    <div class="separator">ou</div>
+    
+    <button @click="enterAsGuest" class="btn guest-btn">
+      Entrar como Visitante
+    </button>
+  </div>
 </template>
 
 <style scoped>
-@import "tailwindcss";
-
-.mainBox {
-    @apply bg-zinc-200 outline-2 outline-black  /*cor*/
-     grid auto-rows-auto                            /*alinhamento*/
-     px-4 py-5 gap-x-4 gap-y-4
-     text-lg font-medium;                      /*espaçamento*/                 /*tamanho*/
+/* Estilos para o Card de Login (Modo Escuro Padrão) */
+.login-container {
+  background: #3a3a3a;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  color: #fff;
+  min-width: 300px;
+  transition: background 0.3s, color 0.3s;
 }
 
-input {
-  /* Estilos do input e do botão */
-  :is(&, button) {
-    @apply rounded-full h-8 outline-2 outline-black w-full;
-  }
+h2 {
+    margin-bottom: 20px;
+}
 
-  /* Estilos exclusivos do input */
-  @apply pl-4 bg-white;
+.input-field {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: #2b2b2b; /* Fundo escuro para inputs */
+    color: #fff;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
 
-  &::placeholder {
-    @apply text-black;
-  }
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn.primary {
+    background: #6fbfff;
+    color: #111;
+    margin-bottom: 15px;
+}
+
+.guest-btn {
+    background: #595959; /* Fundo escuro para o botão visitante */
+    color: #fff;
+    transition: background 0.3s, color 0.3s;
+}
+
+.guest-btn:hover {
+    background: #4a4a4a;
+}
+
+.separator {
+    text-align: center;
+    margin: 15px 0;
+    color: #aaa;
+    transition: color 0.3s;
 }
 </style>
